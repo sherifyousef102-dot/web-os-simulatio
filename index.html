@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Quantum OS - Pro Edition</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body oncontextmenu="openMenu(event)" onclick="closeMenu()">
+
+    <div id="login-screen">
+        <div class="login-card">
+            <i class="fa-solid fa-microchip fa-4x" style="color: #008080; margin-bottom: 15px;"></i>
+            <h3>Quantum Admin Login</h3>
+            <input type="password" id="pass" placeholder="Password: 123">
+            <button onclick="login()">Login</button>
+        </div>
+    </div>
+
+    <div id="ctx-menu">
+        <div class="ctx-item" onclick="location.reload()"><i class="fa-solid fa-sync"></i> Refresh</div>
+        <div class="ctx-item" onclick="alert('Copied to Clipboard!')"><i class="fa-solid fa-copy"></i> Copy</div>
+        <div class="ctx-item" onclick="alert('Pasted successfully!')"><i class="fa-solid fa-paste"></i> Paste</div>
+        <hr>
+        <div class="ctx-item" onclick="changeBg()"><i class="fa-solid fa-image"></i> Change Wallpaper</div>
+    </div>
+
+    <div id="start-menu">
+        <div class="start-header">Quantum Admin</div>
+        <div class="start-body">
+            <div class="start-item" onclick="openApp('win-pc')"><i class="fa-solid fa-folder"></i> My Files</div>
+            <div class="start-item" onclick="openApp('win-google')"><i class="fa-brands fa-google"></i> Browser</div>
+            <div class="start-item" onclick="openApp('win-term')"><i class="fa-solid fa-terminal"></i> Command Line</div>
+            <div class="start-item" onclick="toggleDarkMode()">
+    <i class="fa-solid fa-moon"></i> Dark Mode
+</div>
+            <hr>
+            <div class="start-item" onclick="location.reload()"><i class="fa-solid fa-power-off"></i> Restart</div>
+        </div>
+    </div>
+
+    <input type="file" id="bg-input" accept="image/*" style="display: none;" onchange="loadCustomBg(this)">
+
+    <div id="os-root">
+        <div class="desktop-icons">
+            <div class="app-icon" onclick="openApp('win-pc')">
+                <img src="https://cdn-icons-png.flaticon.com/512/906/906309.png"><span>This PC</span>
+            </div>
+            <div class="app-icon" onclick="openApp('win-term')">
+                <img src="https://cdn-icons-png.flaticon.com/512/906/906324.png"><span>Terminal</span>
+            </div>
+            <div class="app-icon" onclick="openApp('win-google')">
+                <img src="https://cdn-icons-png.flaticon.com/512/300/300221.png"><span>Google</span>
+            </div>
+            <div class="app-icon" onclick="openApp('win-calc')">
+                <img src="https://cdn-icons-png.flaticon.com/512/3665/3665910.png"><span>Calculator</span>
+            </div>
+            <div class="app-icon" onclick="takeScreenshot()">
+                <img src="https://cdn-icons-png.flaticon.com/512/1053/1053913.png"><span>Screenshot</span>
+            </div>
+        </div>
+
+        <div id="win-pc" class="window draggable" style="width: 550px;">
+    <div class="win-header handle">
+        <span><i class="fa-solid fa-desktop"></i> This PC (مدير الملفات)</span>
+        <span class="close-btn" onclick="closeApp('win-pc')">✖</span>
+    </div>
+    
+    <div class="file-toolbar" style="padding: 5px; background: var(--win-gray); border-bottom: 1px solid #888; display: flex; gap: 10px;">
+        <button onclick="addNewFolder()" style="cursor:pointer; border: 2px outset white; background: var(--win-gray); padding: 2px 10px;">New Folder</button>
+        <button onclick="document.getElementById('desktop-upload').click()" style="cursor:pointer; border: 2px outset white; background: var(--win-gray); padding: 2px 10px;">Open Desktop</button>
+    </div>
+
+    <div class="win-body" style="background: white; border: 2px inset white; margin: 2px; padding: 15px; height: 300px; overflow-y: auto;">
+        <div id="file-grid" class="file-grid">
+            <div class="file-item"><i class="fa-solid fa-folder"></i><span>Documents</span></div>
+        </div>
+    </div>
+</div>
+
+<input type="file" id="desktop-upload" style="display:none" webkitdirectory directory multiple onchange="loadFromLocalDevice(this)">
+
+        <div id="win-term" class="window draggable" style="width: 500px;">
+            <div class="win-header handle"><span>Terminal</span><span class="close-btn" onclick="closeApp('win-term')">✖</span></div>
+            <div class="win-body terminal-bg">
+                <div id="term-out">Welcome to Quantum Terminal...</div>
+                <div class="input-line">C:\> <input type="text" id="term-in" autofocus></div>
+            </div>
+        </div>
+
+        <div id="win-calc" class="window draggable" style="width: 250px;">
+            <div class="win-header handle"><span>Calculator</span><span class="close-btn" onclick="closeApp('win-calc')">✖</span></div>
+            <div class="win-body">
+                <input id="calc-display" readonly value="0" class="calc-screen">
+                <div class="calc-grid">
+                    <button onclick="press('7')">7</button><button onclick="press('8')">8</button><button onclick="press('9')">9</button><button onclick="press('/')">/</button>
+                    <button onclick="press('4')">4</button><button onclick="press('5')">5</button><button onclick="press('6')">6</button><button onclick="press('*')">*</button>
+                    <button onclick="press('1')">1</button><button onclick="press('2')">2</button><button onclick="press('3')">3</button><button onclick="press('-')">-</button>
+                    <button onclick="press('0')">0</button><button onclick="press('C')">C</button><button onclick="press('=')">=</button><button onclick="press('+')">+</button>
+                </div>
+            </div>
+        </div>
+<div id="win-google" class="window draggable" style="width: 450px; display: none;">
+    <div class="win-header handle">
+        <span><i class="fa-brands fa-google"></i> Google Browser</span>
+        <span class="close-btn" onclick="closeApp('win-google')">✖</span>
+    </div>
+    <div class="win-body" style="text-align:center; padding: 30px;">
+        <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" width="130">
+        
+        <div style="position: relative; margin-top: 20px; width: 90%; margin-left: auto; margin-right: auto;">
+            <input type="text" id="g-input" placeholder="Search Google..." 
+                   autocomplete="off" 
+                   onkeydown="if(event.key==='Enter') execGoogleSearch()"
+                   style="width: 100%; padding: 10px 40px 10px 15px; border: 1px solid #dfe1e5; border-radius: 24px; outline: none; box-shadow: 0 1px 6px rgba(32,33,36,0.28); box-sizing: border-box;">
+            
+            <i class="fa-solid fa-xmark" 
+               style="position: absolute; right: 15px; top: 12px; cursor: pointer; color: #70757a; font-size: 14px;" 
+               onclick="document.getElementById('g-input').value = ''"></i>
+        </div>
+    </div>
+        </div>
+
+        <footer class="taskbar">
+            <div class="taskbar-left">
+                <div class="start-btn" onclick="toggleStart(event)"><i class="fa-brands fa-windows"></i> Start</div>
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search..." oninput="searchApps(this.value)">
+                </div>
+            </div>
+            <div class="tray">
+                <span><i class="fa-solid fa-temperature-half"></i> <span id="temp">29°C</span></span>
+                <i class="fa-solid fa-wifi" id="wifi-ico"></i>
+                <span id="batt-info">--%</span>
+                <div class="time-container">
+                    <b id="clock-val">00:00</b>
+                    <small id="date-val">2026/04/24</small>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
