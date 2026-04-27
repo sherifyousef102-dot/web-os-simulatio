@@ -1,48 +1,71 @@
-// نظام السحب (Drag & Drop)
+// =============================
+// DRAG & DROP
+// =============================
 interact('.draggable').draggable({
     allowFrom: '.handle',
     listeners: {
-        move (event) {
-            var target = event.target
-            var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
-            var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy
-            target.style.transform = 'translate(' + x + 'px, ' + y + 'px)'
-            target.setAttribute('data-x', x)
-            target.setAttribute('data-y', y)
+        move(event) {
+            var target = event.target;
+            var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+            var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+            target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+            target.setAttribute('data-x', x);
+            target.setAttribute('data-y', y);
         }
     }
 });
 
-// الدخول
+
+// =============================
+// LOGIN (UNCHANGED)
+// =============================
 function login() {
-    if(document.getElementById('pass').value === "123") {
+    if (document.getElementById('pass').value === "123") {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('os-root').style.display = 'block';
     }
 }
 
-// كليك يمين
+
+// =============================
+// RIGHT CLICK MENU
+// =============================
 function openMenu(e) {
     e.preventDefault();
     const m = document.getElementById('ctx-menu');
-    m.style.display = 'block'; m.style.left = e.pageX + 'px'; m.style.top = e.pageY + 'px';
+    m.style.display = 'block';
+    m.style.left = e.pageX + 'px';
+    m.style.top = e.pageY + 'px';
 }
-function closeMenu() { document.getElementById('ctx-menu').style.display = 'none'; }
 
-// تشغيل الـ Start
+function closeMenu() {
+    document.getElementById('ctx-menu').style.display = 'none';
+}
+
+
+// =============================
+// START MENU
+// =============================
 function toggleStart(e) {
     e.stopPropagation();
     const menu = document.getElementById('start-menu');
     menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
 }
 
-// قفل الـ Start عند الضغط في أي مكان آخر
 document.addEventListener('click', () => {
     document.getElementById('start-menu').style.display = 'none';
 });
 
-// تغيير الخلفية بصورة من الجهاز
-function changeBg() { document.getElementById('bg-input').click(); closeMenu(); }
+
+// =============================
+// BACKGROUND
+// =============================
+function changeBg() {
+    document.getElementById('bg-input').click();
+    closeMenu();
+}
+
 function loadCustomBg(input) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -54,160 +77,310 @@ function loadCustomBg(input) {
     reader.readAsDataURL(input.files[0]);
 }
 
-// فايل سيستم (إضافة مجلد)
+
+// =============================
+// FILE SYSTEM (SIMPLE UI)
+// =============================
 function addFolder() {
     const name = prompt("Enter folder name:");
-    if(name) {
-        const item = document.createElement('div');
-        item.className = 'file-item';
-        item.innerHTML = `<i class="fa-solid fa-folder"></i><span>${name}</span>`;
-        document.getElementById('file-system').appendChild(item);
+    if (!name) return;
+
+    const id = Date.now();
+
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.setAttribute('data-id', id);
+
+    item.innerHTML = `
+        <i class="fa-solid fa-folder"></i>
+        <span>${name}</span>
+        <small style="cursor:pointer; margin-left:10px;" onclick="deleteItem(${id})">🗑</small>
+    `;
+
+    document.getElementById('file-grid').appendChild(item);
+}
+function deleteItem(id) {
+    const item = document.querySelector(`[data-id="${id}"]`);
+    if (item) {
+        item.remove();
     }
 }
 
-// تيرمينال
+
+// =============================
+// TERMINAL (FULL UPGRADE ONLY)
+// =============================
 document.getElementById('term-in').addEventListener('keypress', (e) => {
-    if(e.key === 'Enter') {
-        const cmd = e.target.value.toLowerCase().trim();
+    if (e.key === 'Enter') {
+
+        const cmdLine = e.target.value.trim();
+        const args = cmdLine.split(' ');
+        const cmd = args[0].toLowerCase();
         const out = document.getElementById('term-out');
+
         let res = "";
-        if(cmd === 'help') res = "Commands: cls, date, status, whoami";
-        else if(cmd === 'cls') { out.innerHTML = ""; e.target.value = ""; return; }
-        else if(cmd === 'date') res = new Date().toLocaleString();
-        else if(cmd === 'status') res = "Quantum OS 1.0.5: All systems active.";
-        else if(cmd === 'whoami') res = "Admin_User";
-        else if(cmd !== "") res = `'${cmd}' is not recognized.`;
-        
-        out.innerHTML += `<div>C:\\> ${cmd}</div><div>${res}</div><br>`;
+
+        // ================= HELP =================
+        if (cmd === 'help') {
+            res = `
+pwd - show path<br>
+ls / ls -a / ls -l<br>
+cd / cd home / cd ..<br>
+mkdir<br>
+touch<br>
+rm / rm -i / rm -r / rm -v / rm -d<br>
+stat<br>
+cat / cat -n<br>
+echo<br>
+nano<br>
+bash<br>
+cls / date / status / whoami
+`;
+        }
+
+        // ================= FILE SYSTEM =================
+        else if (cmd === 'pwd') {
+            res = "/home/quantum/desktop";
+        }
+
+        else if (cmd === 'ls') {
+            if (args[1] === '-a') res = ". .. .config Documents hidden.txt";
+            else if (args[1] === '-l') res = "-rw-r--r-- file1.txt<br>-rw-r--r-- file2.txt";
+            else res = "Documents Photos note.txt";
+        }
+
+        // ================= NAVIGATION =================
+        else if (cmd === 'cd') {
+            if (args[1] === 'home') res = "Entered home";
+            else if (args[1] === '/') res = "Root directory";
+            else if (args[1] === '..') res = "Back one step";
+            else res = `Entered ${args[1] || ''}`;
+        }
+
+        // ================= DIRECTORIES =================
+        else if (cmd === 'mkdir') {
+            if (!args[1]) res = "missing operand";
+            else res = `Created folder(s): ${args.slice(1).join(', ')}`;
+        }
+
+        // ================= FILES =================
+        else if (cmd === 'touch') {
+            res = args[1] ? `File created: ${args[1]}` : "missing file";
+        }
+
+        // ================= DELETE =================
+        else if (cmd === 'rm') {
+            if (args.includes('-i')) res = `Confirm delete ${args[args.length - 1]}`;
+            else if (args.includes('-r')) res = `Removed folder ${args[args.length - 1]}`;
+            else if (args.includes('-v')) res = `Deleted ${args[args.length - 1]}`;
+            else if (args.includes('-d')) res = `Deleted empty folder ${args[args.length - 1]}`;
+            else res = `Deleted ${args[1]}`;
+        }
+
+        // ================= INFO =================
+        else if (cmd === 'stat') {
+            res = `File: ${args[1] || 'unknown'} | size: 1KB | created: today`;
+        }
+
+        // ================= EDITOR =================
+        else if (cmd === 'nano') {
+            res = `Opening nano for ${args[1]}`;
+        }
+
+        else if (cmd === 'bash') {
+            res = `Running script ${args[1]}`;
+        }
+
+        // ================= CAT =================
+        else if (cmd === 'cat') {
+            if (args.includes('-n')) res = "1 line one<br>2 line two";
+            else if (args[1]) res = `Content of ${args[1]}`;
+            else res = "missing file";
+        }
+
+        // ================= ECHO =================
+        else if (cmd === 'echo') {
+            if (cmdLine.includes('>')) res = "written to file";
+            else res = args.slice(1).join(' ');
+        }
+
+        // ================= SYSTEM =================
+        else if (cmd === 'cls') {
+            out.innerHTML = "";
+            e.target.value = "";
+            return;
+        }
+
+        else if (cmd === 'date') {
+            res = new Date().toLocaleString();
+        }
+
+        else if (cmd === 'status') {
+            res = "Quantum OS 1.0.5: All systems active.";
+        }
+
+        else if (cmd === 'whoami') {
+            res = "Admin_User";
+        }
+
+        else if (cmd !== "") {
+            res = `'${cmd}' is not recognized`;
+        }
+
+        // ================= OUTPUT =================
+        out.innerHTML += `<div>C:\\> ${cmdLine}</div><div>${res}</div>`;
         e.target.value = "";
+
+        const winBody = out.parentElement;
+        winBody.scrollTop = winBody.scrollHeight;
     }
 });
 
-// آلة حاسبة
+
+// =============================
+// CALCULATOR
+// =============================
 let calcExp = "";
+
 function press(v) {
     const d = document.getElementById('calc-display');
-    if(v === '=') { try { d.value = eval(calcExp); calcExp = d.value; } catch { d.value = "Error"; } }
-    else if(v === 'C') { calcExp = ""; d.value = "0"; }
-    else { calcExp += v; d.value = calcExp; }
+
+    if (v === '=') {
+        try {
+            d.value = eval(calcExp);
+            calcExp = d.value;
+        } catch {
+            d.value = "Error";
+        }
+    } else if (v === 'C') {
+        calcExp = "";
+        d.value = "0";
+    } else {
+        calcExp += v;
+        d.value = calcExp;
+    }
 }
 
-// تحديثات شريط المهام (ساعة، بطارية، واي فاي)
+
+// =============================
+// TASKBAR
+// =============================
 setInterval(() => {
+
     const now = new Date();
-    document.getElementById('clock-val').innerText = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    document.getElementById('date-val').innerText = now.toLocaleDateString();
-    
+
+    document.getElementById('clock-val').innerText =
+        now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    document.getElementById('date-val').innerText =
+        now.toLocaleDateString();
+
     navigator.getBattery?.().then(b => {
-        document.getElementById('batt-info').innerText = Math.round(b.level * 100) + "%";
+        document.getElementById('batt-info').innerText =
+            Math.round(b.level * 100) + "%";
     });
 
-    document.getElementById('wifi-ico').className = navigator.onLine ? "fa-solid fa-wifi" : "fa-solid fa-wifi-slash";
-    document.getElementById('temp').innerText = (28 + Math.floor(Math.random()*5)) + "°C";
+    document.getElementById('wifi-ico').className =
+        navigator.onLine ? "fa-solid fa-wifi" : "fa-solid fa-wifi-slash";
+
+    document.getElementById('temp').innerText =
+        (28 + Math.floor(Math.random() * 5)) + "°C";
+
 }, 1000);
 
-// وظائف عامة
-function openApp(id) { document.getElementById(id).style.display = 'flex'; }
-function closeApp(id) { document.getElementById(id).style.display = 'none'; }
 
+// =============================
+// GLOBAL APPS
+// =============================
+function openApp(id) {
+    document.getElementById(id).style.display = 'flex';
+}
+
+function closeApp(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+
+// =============================
+// SCREENSHOT
+// =============================
 function takeScreenshot() {
     html2canvas(document.body).then(canvas => {
         const link = document.createElement('a');
-        link.download = 'quantum_os_shot.png';
+        link.download = 'os.png';
         link.href = canvas.toDataURL();
         link.click();
     });
 }
 
+
+// =============================
+// SEARCH APPS
+// =============================
 function searchApps(q) {
-    const apps = document.querySelectorAll('.app-icon');
-    apps.forEach(app => {
-        app.style.opacity = app.innerText.toLowerCase().includes(q.toLowerCase()) ? "1" : "0.2";
+    document.querySelectorAll('.app-icon').forEach(app => {
+        app.style.opacity =
+            app.innerText.toLowerCase().includes(q.toLowerCase())
+                ? "1"
+                : "0.2";
     });
 }
-// دالة إضافة فولدر جديد مع زر الحذف
-function addNewFolder() {
-    const folderName = prompt("اسم المجلد الجديد:", "New Folder");
-    if (folderName) {
-        const grid = document.getElementById('file-grid');
-        const id = 'f-' + Date.now();
-        const div = document.createElement('div');
-        div.className = 'file-item';
-        div.id = id;
-        div.style.position = 'relative';
-        div.innerHTML = `
-            <button onclick="document.getElementById('${id}').remove()" style="position: absolute; top: -5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; width: 18px; height: 18px; cursor: pointer; font-size: 10px; z-index: 10;">x</button>
-            <i class="fa-solid fa-folder" style="font-size: 24px; color: #f1c40f; display: block;"></i>
-            <span style="font-size: 10px;">${folderName}</span>
-        `;
-        grid.appendChild(div);
-    }
-}
 
-// دالة فتح ملفات جهازك (Desktop) وعرضها
-function loadFromLocalDevice(input) {
-    const grid = document.getElementById('file-grid');
-    const files = input.files;
-    
-    for (let i = 0; i < Math.min(files.length, 15); i++) {
-        const id = 'file-' + i + Date.now();
-        const div = document.createElement('div');
-        div.className = 'file-item';
-        div.id = id;
-        div.style.position = 'relative';
-        
-        const icon = files[i].type.startsWith('image/') ? 'fa-file-image' : 'fa-file';
-        
-        div.innerHTML = `
-            <button onclick="document.getElementById('${id}').remove()" style="position: absolute; top: -5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; width: 18px; height: 18px; cursor: pointer; font-size: 10px; z-index: 10;">x</button>
-            <i class="fa-solid ${icon}" style="font-size: 24px; color: #555; display: block;"></i>
-            <span style="font-size: 10px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${files[i].name}</span>
-        `;
-        grid.appendChild(div);
-    }
-}
+
+// =============================
+// DARK MODE
+// =============================
 function toggleDarkMode() {
-    // بتبدل كلاس dark-mode في جسم الصفحة كله
     document.body.classList.toggle('dark-mode');
-    
-    // اختياري: حفظ الإعداد عشان لما تعمل ريفريش ميرجعش فاتح
-    const isDark = document.body.classList.contains('dark-mode');
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    localStorage.setItem('theme',
+        document.body.classList.contains('dark-mode') ? 'dark' : 'light'
+    );
 }
 
-// كود إضافي عشان أول ما تفتح الصفحة يشوف إنت كنت مختار إيه
-window.onload = function() {
+window.onload = function () {
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
     }
-    // لو عندك دوال تانية في الـ onload ضيفها هنا
 };
-// دالة تنفيذ البحث في جوجل
+
+
+// =============================
+// GOOGLE SEARCH
+// =============================
 function execGoogleSearch() {
     const input = document.getElementById('g-input');
-    const query = input.value.trim();
+    const q = input.value.trim();
 
-    if (query !== "") {
-        // فتح البحث في صفحة جديدة
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
-        
-        // مسح الخانة بعد البحث عشان متسيفش قدامك
-        input.value = ""; 
+    if (q) {
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, '_blank');
+        input.value = "";
     } else {
-        alert("Please enter something to search!");
+        alert("Enter search text");
     }
 }
+// 1. وظيفة بتفتح نافذة اختيار الملفات من جهازك
+function triggerUpload() {
+    document.getElementById('desktop-upload').click();
+}
 
-// تعديل دالة الإغلاق عشان تمسح البحث لو قفلت النافذة
-// تأكد أن هذه الدالة تستبدل الدالة القديمة أو تدمج معها
-function closeApp(id) {
-    const app = document.getElementById(id);
-    if (app) {
-        app.style.display = 'none';
+// 2. وظيفة بتاخد الملفات اللي اخترتها وترسمها جوه الـ OS بتاعك
+function loadFromLocalDevice(input) {
+    const grid = document.getElementById('file-grid'); // المكان اللي الملفات هتنزل فيه
+    const files = input.files; // قايمة الملفات اللي اخترتها
+
+    for (let file of files) {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.style.textAlign = "center";
         
-        // لو بنقفل جوجل، نصفر الخانة
-        if (id === 'win-google') {
-            document.getElementById('g-input').value = "";
-        }
+        // بنختار شكل الأيقونة (لو صورة تظهر أيقونة صورة، ولو ملف عادي تظهر أيقونة ملف)
+        let icon = file.type.startsWith('image/') ? 'fa-file-image' : 'fa-file';
+
+        item.innerHTML = `
+            <i class="fa-solid ${icon}" style="font-size: 40px; color: #555; display: block;"></i>
+            <span style="font-size: 12px;">${file.name}</span>
+        `;
+        
+        grid.appendChild(item); // ضيف الملف في الشاشة
     }
 }
